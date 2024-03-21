@@ -1,23 +1,29 @@
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 
 public class Wordle {
 
     private String wordSolution;
-    private ArrayList<String> solutionList;
-    private ArrayList<String> bannedList;
-    private ArrayList<Integer> leaderboard;
+    private List<String> solutionList;
+    private List<String> bannedList;
+    private List<Integer> leaderboard;
     private static int gameNum = 0;
 
-    public Wordle(ArrayList<String> solutionList, ArrayList<String> bannedList) {
-        this.solutionList = solutionList;
-        this.bannedList = bannedList;
+    public Wordle(Scanner solutions, Scanner banned) {
+        solutionList = new ArrayList<String>();
+        bannedList = new ArrayList<String>();
+        while (solutions.hasNextLine()) {
+            solutionList.add(solutions.nextLine());
+        }
+        while (banned.hasNextLine()) {
+            bannedList.add(banned.nextLine());
+        }
         leaderboard = new ArrayList<Integer>();
     }
 
     public void getRandomWord() {
         String newWord = solutionList.get((int) (Math.random() * solutionList.size()));
-        System.out.println(newWord);
+        // System.out.println(newWord); // make sure this is turned off when actually
+        // playing game
         wordSolution = newWord;
     }
 

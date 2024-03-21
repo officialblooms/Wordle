@@ -1,15 +1,18 @@
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
+import java.io.*;
 
 public class main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
 
-        ArrayList<String> solutionWords = FileReader.getStringData("solution.txt");
-        ArrayList<String> bannedWords = FileReader.getStringData("bannedwords.txt");
-
-        Wordle myGame = new Wordle(solutionWords, bannedWords);
+        Scanner solutions = new Scanner(new File("solution.txt"));
+        Scanner banned = new Scanner(new File("bannedwords.txt"));
         Scanner input = new Scanner(System.in);
 
+        Wordle myGame = new Wordle(solutions, banned);
         myGame.startWordle(input);
+
+        solutions.close();
+        banned.close();
+        input.close(); // closes all running Scanners
     }
 }
