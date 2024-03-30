@@ -1,3 +1,5 @@
+// IDEA: every letter has to be a letter, let the user decide how long the word can be, add a hard mode
+
 // Wordle program is a game played on console, where the user tries to guess a 4-letter word that is
 // selected at random through every game. After the user word is inputted, the program will tell the
 // user if any of the letters are contained in the solution word, and if it is in the right position.
@@ -8,7 +10,7 @@ import java.util.*;
 
 public class Wordle {
 
-    private String wordSolution; // 4-letter word solution picked at random
+    private String solutionWord; // 4-letter word solution picked at random
     private List<String> solutionList; // 4-letter word solutions to choose from
     private List<String> bannedList; // words not eligible for user to guess
     private List<Integer> leaderboard; // leaderboard of best games by least amount of guesses
@@ -41,8 +43,9 @@ public class Wordle {
     /*
      * post: checks user-inputted word for any letters that are contained in the
      * solution word, and if it is in correct position. returns a string in which _
-     * signifies the letter is not found in the solution, x signifying the letter is
-     * in the word but not in the correct position, and o signifying the letter is
+     * signifies the letter is not found in the solution, * signifying the letter is
+     * in the word but not in the correct position, and the letter itself signifying
+     * the letter is
      * in the correct position
      * 
      * @param inputWord - 4-letter user-inputted word
@@ -53,67 +56,45 @@ public class Wordle {
             return "Please type in a valid word.";
         }
 
+        String[] inputLetters = inputWord.split("");
+        String tempSolution = solutionWord; // this will be modified later so its best to make a copy
         String ret = "";
-        String temp = wordSolution;
-        String[] wordStatus = new String[temp.length()];
 
-        // checks if letter is in the correct position
-        for (int i = 0; i < inputWord.length(); i++) {
-
-            wordStatus[i] = "notinWord";
-            String inputLetter = inputWord.substring(i, i + 1);
-
-            for (int j = 0; j < temp.length(); j++) {
-
-                String solutionLetter = temp.substring(j, j + 1);
-
-                /*
-                 * checks if letter is in correct pos; solution word (temp) will
-                 * remove that letter so if the input word has the same letter in
-                 * a different position it won't say "inWord".
-                 */
-                if (solutionLetter.equals(inputLetter) && i == j) {
-                    wordStatus[i] = "inPosition";
-                    if (i == 3) { // prevents out of bounds error
-                        temp = temp.substring(0, i) + "-";
-                    } else {
-                        temp = temp.substring(0, i) + "-" + temp.substring(i + 1);
-                    }
-                }
+        for (int i = 0; i < inputLetters.length; i++) { // checks if letter is in correct position
+            if (inputLetters[i].equals(Character.toString(tempSolution.charAt(i)))) {
+                ret += inputLetters[i];
+                // letter is in correct position, so set to "-" to not be compared again
+                inputLetters[i] = "-";
+                tempSolution = tempSolution.substring(0, i) + "-" + tempSolution.substring(i + 1);
+            } else {
+                ret += "_";
             }
         }
 
-        for (int i = 0; i < inputWord.length(); i++) {
-
-            if (wordStatus[i].equals("inPosition")) {
-                continue;
+        // checks if letter is in word (and isn't in correct position already)
+        for (int i = 0; i < inputLetters.length; i++) {
+            int inputLetterPos = tempSolution.indexOf(inputLetters[i]);
+            // if letter is in right position or is not found in solution word, do nothing
+            if (!inputLetters[i].equals("-") && inputLetterPos != -1) {
+                ret = ret.substring(0, i) + "*" + ret.substring(i + 1);
+                // temporarily removes letter so if same letter is found in different position,
+                // may not be accounted for if input word already has enough of that letter that
+                // solution word contains
+                tempSolution = tempSolution.substring(0, inputLetterPos) + " "
+                        + tempSolution.substring(inputLetterPos + 1);
             }
-
-            String inputLetter = inputWord.substring(i, i + 1);
-
-            for (int j = 0; j < temp.length(); j++) {
-
-                String solutionLetter = temp.substring(j, j + 1);
-
-                if (solutionLetter.equals(inputLetter)) { // if letters match
-                    wordStatus[i] = "inWord";
-                }
-            }
-        }
-
-        for (String status : wordStatus) {
-            ret += status + ", ";
         }
         return ret;
     }
 
     /*
-     * post: initiates Wordle program and outputs information about the _, x, and o
+     * post: initiates Wordle program and outputs information about the _, *, and
+     * letter
      * symbols before prompting the user to type a valid 4-letter guess
      */
     public void startWordle(Scanner input) {
         gameNum++;
-        wordSolution = solutionList.get((int) (Math.random() * solutionList.size()));
+        solutionWord = solutionList.get((int) (Math.random() * solutionList.size()));
         int attempts = 0;
 
         if (gameNum == 1) { // this only prints out when program is started
@@ -121,32 +102,32 @@ public class Wordle {
                     "Welcome to Wordle! Your objective is to guess the mystery 4-letter word\n" +
                             "in the least amount of guesses. Play as many games as you'd like! At the end,\n" +
                             "a leaderboard will display your best games by the number of guesses you used\n" +
-                            "to get the mystery word!\n");
+                            "to get the mystery word!\n\n" +
+                            "After inputting each guess, you will see symbols on each letter position\n" +
+                            "of your word that says how close your guess is to the solution:");
         }
 
         printGuide();
 
         while (true) {
-            System.out.println("Guess the four-letter word by typing your guess below:");
+            System.out.print("Type your guess: ");
             String inputWord = input.next().toLowerCase().trim();
 
             if (inputWord.length() != 4) { // ensures input word is four letters
                 System.out.println("Please type a four letter word.");
-            }
-
-            else {
+            } else {
                 attempts++;
                 System.out.println("\n" + checkWord(inputWord) + "\n");
-                if (inputWord.equals(wordSolution)) {
+                if (inputWord.equals(solutionWord)) {
                     break;
                 }
             }
         }
 
-        System.out.println("Congraulations! You solved the word in " + attempts + " attempts!");
+        System.out.println("Congraulations! You got the word in " + attempts + " attempts!");
         leaderboard.add(attempts);
 
-        System.out.println("Type Y for another round; N to stop playing and view the leaderboard.");
+        System.out.print("Play another round? (y/n): ");
         String newGame = input.next().toLowerCase();
         if (newGame.equals("y")) {
             startWordle(input);
@@ -202,12 +183,10 @@ public class Wordle {
      * post: prints out instructions for the user to refer to
      */
     private void printGuide() {
-        System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
-                "of your word that says how close your guess is to the solution.\n" +
-                "\"_\" means that the letter is not found in the solution.\n" +
-                "\"x\" means that the letter is found in the solution but in a different position.\n" +
-                "\"o\" means that the letter is in the correct position in the solution.\n" +
-                "Note that a letter with a symbol \"o\" does not necessarily mean that it does not appear\n" +
-                "appear somewhere else in the word (i.e. it can appear more than once). Good luck!");
+        System.out.println("\"_\" means that the letter is not found in the solution.\n" +
+                "\"*\" means that the letter is found in the solution but in a different position.\n" +
+                "If the letter you typed in shows up, it means it is in the correct position.\n" +
+                "Note that a letter with a symbol \"*\" does not necessarily mean that it does not appear\n" +
+                "appear somewhere else in the word (i.e. it can appear more than once). Good luck!\n");
     }
 }
