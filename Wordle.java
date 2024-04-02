@@ -13,8 +13,7 @@ public class Wordle {
     private String solutionWord; // 4-letter word solution picked at random
     private List<String> solutionList; // 4-letter word solutions to choose from
     private List<String> bannedList; // words not eligible for user to guess
-    private List<Integer> leaderboard; // leaderboard of best games by least amount of guesses
-    private static int gameNum = 0; // game number user is currently on
+    private Map<Integer, ArrayList<String>> leaderboard; // leaderboard of best games by least amount of guesses
 
     /*
      * pre: solutions and banned have each 4-letter word in diff lines
@@ -37,7 +36,7 @@ public class Wordle {
             bannedList.add(banned.nextLine());
         }
 
-        leaderboard = new ArrayList<Integer>();
+        leaderboard = new TreeMap<>();
     }
 
     /*
@@ -89,24 +88,31 @@ public class Wordle {
 
     /*
      * post: initiates Wordle program and outputs information about the _, *, and
-     * letter
-     * symbols before prompting the user to type a valid 4-letter guess
+     * letter symbols before prompting the user to type a guess
+     * 
+     * @param input - Scanner for user input
      */
     public void startWordle(Scanner input) {
-        gameNum++;
-        solutionWord = solutionList.get((int) (Math.random() * solutionList.size()));
+        System.out.println(
+                "Welcome to Wordle! Your objective is to guess the mystery 4-letter word\n" +
+                        "in the least amount of guesses. Play as many games as you'd like! At the end,\n" +
+                        "a leaderboard will display your best games by the number of guesses you used\n" +
+                        "to get the mystery word!\n\n" +
+                        "After inputting each guess, you will see symbols on each letter position\n" +
+                        "of your word that says how close your guess is to the solution:");
+        startWordle(input, 1);
+    }
+
+    /*
+     * helper method for startWordle to track game number for leaderboard tracking
+     * 
+     * @param input - Scanner for user input
+     * 
+     * @param gameNum - game number user is currently on; default is 1
+     */
+    private void startWordle(Scanner input, int gameNum) {
         int attempts = 0;
-
-        if (gameNum == 1) { // this only prints out when program is started
-            System.out.println(
-                    "Welcome to Wordle! Your objective is to guess the mystery 4-letter word\n" +
-                            "in the least amount of guesses. Play as many games as you'd like! At the end,\n" +
-                            "a leaderboard will display your best games by the number of guesses you used\n" +
-                            "to get the mystery word!\n\n" +
-                            "After inputting each guess, you will see symbols on each letter position\n" +
-                            "of your word that says how close your guess is to the solution:");
-        }
-
+        solutionWord = solutionList.get((int) (Math.random() * solutionList.size()));
         printGuide();
 
         while (true) {
@@ -124,59 +130,23 @@ public class Wordle {
             }
         }
 
-        System.out.println("Congraulations! You got the word in " + attempts + " attempts!");
-        leaderboard.add(attempts);
+        System.out.println(
+                "Congraulations! You got the word in " + attempts + " attempt" + (attempts > 1 ? "s" : "") + "!");
+        if (!leaderboard.containsKey(attempts)) { // if no other game with same num of attempts exist
+            leaderboard.put(attempts, new ArrayList<>()); // create a new array of game number strings
+        }
+        leaderboard.get(attempts).add("Game #" + gameNum); // add game number to amount of attempts
 
         System.out.print("Play another round? (y/n): ");
         String newGame = input.next().toLowerCase();
         if (newGame.equals("y")) {
-            startWordle(input);
-        } else {
-            System.out.println(sortLeaderboard());
-        }
-    }
-
-    /*
-     * post: Returns a leaderboard sorted by the number of guesses the user used to
-     * get the solution word, in increasing order.
-     */
-    public String sortLeaderboard() {
-
-        String ret = "High Score Leaderboard: \n\n";
-        // reference array to track which game solved with how many attempts
-        int[] games = new int[leaderboard.size()];
-
-        for (int i = 0; i < leaderboard.size(); i++) {
-            games[i] = i + 1; // assigns numbers to the games array
-        }
-
-        for (int i = 0; i < leaderboard.size(); i++) {
-            int current = leaderboard.get(i);
-            int currentInd = i;
-
-            for (int j = i + 1; j < leaderboard.size(); j++) {
-                if (leaderboard.get(j) < current) {
-                    current = leaderboard.get(j);
-                    currentInd = j;
-                }
+            startWordle(input, gameNum + 1);
+        } else { // print out leaderboard
+            for (int attemptNum : leaderboard.keySet()) {
+                System.out.println(
+                        leaderboard.get(attemptNum) + ": " + attemptNum + " attempt" + (attemptNum > 1 ? "s" : ""));
             }
-
-            // swaps the attempts in the leaderboard
-            int temp = leaderboard.get(i);
-            leaderboard.set(i, current);
-            leaderboard.set(currentInd, temp);
-
-            // swaps the game nums in the array
-            temp = games[i];
-            games[i] = games[currentInd];
-            games[currentInd] = temp;
         }
-
-        for (int i = 0; i < leaderboard.size(); i++) {
-            ret += "Game " + games[i] + ": " + leaderboard.get(i) + " attempts\n";
-        }
-
-        return ret;
     }
 
     /*
