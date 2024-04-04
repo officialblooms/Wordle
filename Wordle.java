@@ -64,7 +64,7 @@ public class Wordle {
                 ret += inputLetters[i];
                 // letter is in correct position, so set to "-" to not be compared again
                 inputLetters[i] = "-";
-                tempSolution = tempSolution.substring(0, i) + "-" + tempSolution.substring(i + 1);
+                replaceAt(tempSolution, i, "-");
             } else {
                 ret += "_";
             }
@@ -75,12 +75,11 @@ public class Wordle {
             int inputLetterPos = tempSolution.indexOf(inputLetters[i]);
             // if letter is in right position or is not found in solution word, do nothing
             if (!inputLetters[i].equals("-") && inputLetterPos != -1) {
-                ret = ret.substring(0, i) + "*" + ret.substring(i + 1);
+                replaceAt(ret, i, "*");
                 // temporarily removes letter so if same letter is found in different position,
                 // may not be accounted for if input word already has enough of that letter that
                 // solution word contains
-                tempSolution = tempSolution.substring(0, inputLetterPos) + " "
-                        + tempSolution.substring(inputLetterPos + 1);
+                replaceAt(tempSolution, inputLetterPos, " ");
             }
         }
         return ret;
@@ -150,13 +149,34 @@ public class Wordle {
     }
 
     /*
+     * pre: index is within bounds of given String (throw IndexOutOfBoundsException
+     * otherwise)
+     * post: replaces the given string with the given character at the given index.
+     * this method is similar to the String library's replace() function except that
+     * it does not replace every occurence of the given input. rather, it only
+     * replaces at the provided index
+     * 
+     * @param toReplace - String to have its contents modified
+     * 
+     * @param index - character position to be replaced
+     * 
+     * @param character - character to replace at the given index
+     */
+    private void replaceAt(String toReplace, int index, String character) {
+        if (index < 0 || index >= toReplace.length()) {
+            throw new IndexOutOfBoundsException();
+        }
+        toReplace = toReplace.substring(0, index) + character + toReplace.substring(index + 1);
+    }
+
+    /*
      * post: prints out instructions for the user to refer to
      */
     private void printGuide() {
         System.out.println("\"_\" means that the letter is not found in the solution.\n" +
                 "\"*\" means that the letter is found in the solution but in a different position.\n" +
-                "If the letter you typed in shows up, it means it is in the correct position.\n" +
-                "Note that a letter with a symbol \"*\" does not necessarily mean that it does not appear\n" +
+                "If the letter shows up in the result, it is in the correct position.\n" +
+                "NOTE: letter with a symbol \"*\" does not necessarily mean that it does not appear\n" +
                 "appear somewhere else in the word (i.e. it can appear more than once). Good luck!\n");
     }
 }
