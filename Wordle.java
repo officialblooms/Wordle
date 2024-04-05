@@ -1,6 +1,9 @@
 // IDEA: every letter has to be a letter, let the user decide how long the word can be, add a hard mode
+// figure out what makes a word valid(?)
 
-// Wordle program is a game played on console, where the user tries to guess a 4-letter word that is
+// IMPROVE: traverse the word list only once by having a word length be the key to words that fit that length in a map
+
+// Wordle program is a game played on console, where the user tries to guess a word that is
 // selected at random through every game. After the user word is inputted, the program will tell the
 // user if any of the letters are contained in the solution word, and if it is in the right position.
 // The user can do as many games as they want, and once they exit, a leaderboard will display their
@@ -10,13 +13,13 @@ import java.util.*;
 
 public class Wordle {
 
-    private String solutionWord; // 4-letter word solution picked at random
-    private List<String> solutionList; // 4-letter word solutions to choose from
-    private List<String> bannedList; // words not eligible for user to guess
+    private String solutionWord; // word solution picked at random
+    private List<String> wordList; // list of legal words
+    private List<String> solutionList; // word solutions to choose from
     private Map<Integer, ArrayList<String>> leaderboard; // leaderboard of best games by least amount of guesses
 
     /*
-     * pre: solutions and banned have each 4-letter word in diff lines
+     * pre: solutions and banned have each word in diff lines
      * post: updates necessary instance variables by transferring contents of
      * solutions and banned files into the program
      * 
@@ -24,16 +27,12 @@ public class Wordle {
      * 
      * @param banned - Scanner that reads contents of banned words
      */
-    public Wordle(Scanner solutions, Scanner banned) {
-        solutionList = new ArrayList<String>();
-        bannedList = new ArrayList<String>();
+    public Wordle(Scanner words) {
+        wordList = new ArrayList<>();
+        solutionList = new ArrayList<>();
 
-        while (solutions.hasNextLine()) {
-            solutionList.add(solutions.nextLine());
-        }
-
-        while (banned.hasNextLine()) {
-            bannedList.add(banned.nextLine());
+        while (words.hasNextLine()) {
+            wordList.add(words.nextLine());
         }
 
         leaderboard = new TreeMap<>();
@@ -47,11 +46,11 @@ public class Wordle {
      * the letter is
      * in the correct position
      * 
-     * @param inputWord - 4-letter user-inputted word
+     * @param inputWord - user-inputted word
      */
     public String checkWord(String inputWord) {
 
-        if (bannedList.contains(inputWord)) {
+        if (inputWord.length() != solutionWord.length()) {
             return "Please type in a valid word.";
         }
 
@@ -86,19 +85,36 @@ public class Wordle {
     }
 
     /*
-     * post: initiates Wordle program and outputs information about the _, *, and
-     * letter symbols before prompting the user to type a guess
+     * post: sets up the Wordle program by prompting the user to specify solution
+     * word length to guess
      * 
      * @param input - Scanner for user input
      */
     public void startWordle(Scanner input) {
         System.out.println(
-                "Welcome to Wordle! Your objective is to guess the mystery 4-letter word\n" +
-                        "in the least amount of guesses. Play as many games as you'd like! At the end,\n" +
+                "Welcome to Wordle! Your objective is to guess the mystery word in the\n" +
+                        "least amount of guesses. Play as many games as you'd like! At the end,\n" +
                         "a leaderboard will display your best games by the number of guesses you used\n" +
-                        "to get the mystery word!\n\n" +
-                        "After inputting each guess, you will see symbols on each letter position\n" +
-                        "of your word that says how close your guess is to the solution:");
+                        "to get the mystery word!\n\n");
+        while (true) {
+            System.out.print("What word length would you like to attempt today? (min. 4): ");
+            int length = input.nextInt(); // catch "not an integer" case later
+            if (length < 4) {
+                System.out.print("Please type a number that is at least 4.");
+            } else {
+                // this for loop adds all words in wordList with specified length into solution
+                // list
+                for (String word : wordList) {
+                    if (word.length() == length) {
+                        solutionList.add(word);
+                    }
+                }
+                break;
+            }
+        }
+
+        System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
+                "of your word that says how close your guess is to the solution:");
         startWordle(input, 1);
     }
 
@@ -112,20 +128,17 @@ public class Wordle {
     private void startWordle(Scanner input, int gameNum) {
         int attempts = 0;
         solutionWord = solutionList.get((int) (Math.random() * solutionList.size()));
+        System.out.println(solutionWord);
         printGuide();
 
         while (true) {
             System.out.print("Type your guess: ");
             String inputWord = input.next().toLowerCase().trim();
 
-            if (inputWord.length() != 4) { // ensures input word is four letters
-                System.out.println("Please type a four letter word.");
-            } else {
-                attempts++;
-                System.out.println("\n" + checkWord(inputWord) + "\n");
-                if (inputWord.equals(solutionWord)) {
-                    break;
-                }
+            attempts++;
+            System.out.println("\n" + checkWord(inputWord) + "\n");
+            if (inputWord.equals(solutionWord)) {
+                break;
             }
         }
 
