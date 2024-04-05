@@ -97,10 +97,10 @@ public class Wordle {
                         "a leaderboard will display your best games by the number of guesses you used\n" +
                         "to get the mystery word!\n\n");
         while (true) {
-            System.out.print("What word length would you like to attempt today? (min. 4): ");
+            System.out.print("How long would you like the word solution to be? Choose between 4 and 8: ");
             int length = input.nextInt(); // catch "not an integer" case later
-            if (length < 4) {
-                System.out.print("Please type a number that is at least 4.");
+            if (length < 4 || length > 8) {
+                System.out.println("Please type a number between 4 and 8");
             } else {
                 // this for loop adds all words in wordList with specified length into solution
                 // list
