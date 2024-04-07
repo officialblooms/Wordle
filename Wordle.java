@@ -19,7 +19,7 @@ public class Wordle {
     private Map<Integer, ArrayList<String>> leaderboard; // leaderboard of best games by least amount of guesses
 
     /*
-     * pre: solutions and banned have each word in diff lines
+     * pre: words file has each word in a new line
      * post: updates necessary instance variables by transferring contents of
      * solutions and banned files into the program
      * 
