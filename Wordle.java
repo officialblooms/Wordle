@@ -1,7 +1,4 @@
-// IDEA: every letter has to be a letter, let the user decide how long the word can be, add a hard mode
-// figure out what makes a word valid(?)
-
-// IMPROVE: traverse the word list only once by having a word length be the key to words that fit that length in a map
+// IDEA: every letter has to be a letter, add a hard mode figure out what makes a word valid(?)
 
 // Wordle program is a game played on console, where the user tries to guess a word that is
 // selected at random through every game. After the user word is inputted, the program will tell the
@@ -13,26 +10,26 @@ import java.util.*;
 
 public class Wordle {
 
-    private String solutionWord; // word solution picked at random
-    private List<String> wordList; // list of legal words
-    private List<String> solutionList; // word solutions to choose from
+    private Map<Integer, ArrayList<String>> wordList; // list of legal words sorted by word length
     private Map<Integer, ArrayList<String>> leaderboard; // leaderboard of best games by least amount of guesses
+    public static final int MIN_LENGTH = 3; // minimum word solution length
+    public static final int MAX_LENGTH = 6; // maximum word solution length
 
     /*
      * pre: words file has each word in a new line
-     * post: updates necessary instance variables by transferring contents of
-     * solutions and banned files into the program
+     * post: stores given word bank into the program for later reference, as well as initializing leaderboard
      * 
-     * @param solutions - Scanner that reads contents of word solutions
-     * 
-     * @param banned - Scanner that reads contents of banned words
+     * @param words - file of valid words
      */
     public Wordle(Scanner words) {
-        wordList = new ArrayList<>();
-        solutionList = new ArrayList<>();
+        wordList = new HashMap<>();
+        for (int i = MIN_LENGTH; i <= MAX_LENGTH; i++) {
+            wordList.put(i, new ArrayList<>());
+        }
 
         while (words.hasNextLine()) {
-            wordList.add(words.nextLine());
+            String word = words.nextLine();
+            wordList.get(word.length()).add(word);
         }
 
         leaderboard = new TreeMap<>();
@@ -40,15 +37,12 @@ public class Wordle {
 
     /*
      * post: checks user-inputted word for any letters that are contained in the
-     * solution word, and if it is in correct position. returns a string in which _
-     * signifies the letter is not found in the solution, * signifying the letter is
-     * in the word but not in the correct position, and the letter itself signifying
-     * the letter is
-     * in the correct position
+     * solution word, and if it is in correct position.
      * 
      * @param inputWord - user-inputted word
+     * @param solutionWord - word solution that will be compared with user word
      */
-    public String checkWord(String inputWord) {
+    public String checkWord(String inputWord, String solutionWord) {
 
         if (inputWord.length() != solutionWord.length()) {
             return "Please type in a valid word.";
@@ -63,7 +57,7 @@ public class Wordle {
                 ret += inputLetters[i];
                 // letter is in correct position, so set to "-" to not be compared again
                 inputLetters[i] = "-";
-                replaceAt(tempSolution, i, "-");
+                tempSolution = replaceAt(tempSolution, i, "-");
             } else {
                 ret += "_";
             }
@@ -74,19 +68,18 @@ public class Wordle {
             int inputLetterPos = tempSolution.indexOf(inputLetters[i]);
             // if letter is in right position or is not found in solution word, do nothing
             if (!inputLetters[i].equals("-") && inputLetterPos != -1) {
-                replaceAt(ret, i, "*");
+                ret = replaceAt(ret, i, "*");
                 // temporarily removes letter so if same letter is found in different position,
                 // may not be accounted for if input word already has enough of that letter that
                 // solution word contains
-                replaceAt(tempSolution, inputLetterPos, " ");
+                tempSolution = replaceAt(tempSolution, inputLetterPos, " ");
             }
         }
         return ret;
     }
 
     /*
-     * post: sets up the Wordle program by prompting the user to specify solution
-     * word length to guess
+     * post: sets up program by prompting the user to specify solution word length to guess
      * 
      * @param input - Scanner for user input
      */
@@ -96,26 +89,17 @@ public class Wordle {
                         "least amount of guesses. Play as many games as you'd like! At the end,\n" +
                         "a leaderboard will display your best games by the number of guesses you used\n" +
                         "to get the mystery word!\n\n");
+
         while (true) {
-            System.out.print("How long would you like the word solution to be? Choose between 4 and 8: ");
+            System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and " + MAX_LENGTH + ": ");
             int length = input.nextInt(); // catch "not an integer" case later
-            if (length < 4 || length > 8) {
-                System.out.println("Please type a number between 4 and 8");
-            } else {
-                // this for loop adds all words in wordList with specified length into solution
-                // list
-                for (String word : wordList) {
-                    if (word.length() == length) {
-                        solutionList.add(word);
-                    }
-                }
+            if (isValidLength(length)) {
+                System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
+                "of your word that says how close your guess is to the solution:");
+                startWordle(input, 1, length);
                 break;
             }
         }
-
-        System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
-                "of your word that says how close your guess is to the solution:");
-        startWordle(input, 1);
     }
 
     /*
@@ -125,10 +109,12 @@ public class Wordle {
      * 
      * @param gameNum - game number user is currently on; default is 1
      */
-    private void startWordle(Scanner input, int gameNum) {
+    private void startWordle(Scanner input, int gameNum, int wordLength) {
         int attempts = 0;
-        solutionWord = solutionList.get((int) (Math.random() * solutionList.size()));
-        System.out.println(solutionWord);
+        int randIndex = (int) (Math.random() * wordList.get(wordLength).size());
+        String solutionWord = wordList.get(wordLength).get(randIndex);
+        // System.out.println(solutionWord);
+
         printGuide();
 
         while (true) {
@@ -136,7 +122,7 @@ public class Wordle {
             String inputWord = input.next().toLowerCase().trim();
 
             attempts++;
-            System.out.println("\n" + checkWord(inputWord) + "\n");
+            System.out.println("\n" + checkWord(inputWord, solutionWord) + "\n");
             if (inputWord.equals(solutionWord)) {
                 break;
             }
@@ -147,12 +133,19 @@ public class Wordle {
         if (!leaderboard.containsKey(attempts)) { // if no other game with same num of attempts exist
             leaderboard.put(attempts, new ArrayList<>()); // create a new array of game number strings
         }
-        leaderboard.get(attempts).add("Game #" + gameNum); // add game number to amount of attempts
+        leaderboard.get(attempts).add("Game #" + gameNum + " w/ length " + wordLength); // add game number to amount of attempts + word length selection
 
         System.out.print("Play another round? (y/n): ");
         String newGame = input.next().toLowerCase();
         if (newGame.equals("y")) {
-            startWordle(input, gameNum + 1);
+            while (true) {
+                System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and " + MAX_LENGTH + ": ");
+                int length = input.nextInt();
+                if (isValidLength(length)) {
+                    startWordle(input, gameNum + 1, length);
+                    break;
+                }
+            }
         } else { // print out leaderboard
             for (int attemptNum : leaderboard.keySet()) {
                 System.out.println(
@@ -162,12 +155,25 @@ public class Wordle {
     }
 
     /*
+     * post: checks if given number is within bounds of potential length of word solution
+     * 
+     * @param num - number the user inputted for word solution length
+     */
+    private boolean isValidLength(int num) {
+        boolean inRange = num >= MIN_LENGTH && num <= MAX_LENGTH;
+        if (!inRange) {
+            System.out.println("Please type a number between " + MIN_LENGTH + " and " + MAX_LENGTH);
+        }
+        return inRange;
+    }
+
+    /*
      * pre: index is within bounds of given String (throw IndexOutOfBoundsException
      * otherwise)
-     * post: replaces the given string with the given character at the given index.
-     * this method is similar to the String library's replace() function except that
-     * it does not replace every occurence of the given input. rather, it only
-     * replaces at the provided index
+     * post: replaces the given string with the given character at the given index and 
+     * returns the result. this method is similar to the String library's replace()
+     * function except that it does not replace every occurence of the given input.
+     * rather, it only replaces at the provided index and returns a string.
      * 
      * @param toReplace - String to have its contents modified
      * 
@@ -175,15 +181,16 @@ public class Wordle {
      * 
      * @param character - character to replace at the given index
      */
-    private void replaceAt(String toReplace, int index, String character) {
+    private String replaceAt(String toReplace, int index, String character) {
         if (index < 0 || index >= toReplace.length()) {
             throw new IndexOutOfBoundsException();
         }
         toReplace = toReplace.substring(0, index) + character + toReplace.substring(index + 1);
+        return toReplace;
     }
 
     /*
-     * post: prints out instructions for the user to refer to
+     * post: prints out representation of each symbol for the program
      */
     private void printGuide() {
         System.out.println("\"_\" means that the letter is not found in the solution.\n" +
