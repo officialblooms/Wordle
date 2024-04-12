@@ -24,8 +24,8 @@ public class Wordle {
      */
     public Wordle(Scanner words) {
         wordList = new HashMap<>();
-        for (int i = MIN_LENGTH; i <= MAX_LENGTH; i++) {
-            wordList.put(i, new ArrayList<>());
+        for (int len = MIN_LENGTH; len <= MAX_LENGTH; len++) {
+            wordList.put(len, new ArrayList<>());
         }
 
         while (words.hasNextLine()) {
@@ -72,8 +72,8 @@ public class Wordle {
             if (!inputLetters[i].equals("-") && inputLetterPos != -1) {
                 ret = replaceAt(ret, i, "*");
                 // temporarily removes letter so if same letter is found in different position,
-                // may not be accounted for if input word already has enough of that letter that
-                // solution word contains
+                // should not be accounted for if that letter is not found anywhere else
+                // in solution word besides this one
                 tempSolution = replaceAt(tempSolution, inputLetterPos, " ");
             }
         }
@@ -91,7 +91,7 @@ public class Wordle {
                 "Welcome to Wordle! Your objective is to guess the mystery word in the\n" +
                         "least amount of guesses. Play as many games as you'd like! At the end,\n" +
                         "a leaderboard will display your best games by the number of guesses you used\n" +
-                        "to get the mystery word!\n\n");
+                        "to get the mystery word! (UNLIMITED GUESSES)\n\n");
 
         while (true) {
             System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
