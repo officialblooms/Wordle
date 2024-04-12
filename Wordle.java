@@ -17,7 +17,8 @@ public class Wordle {
 
     /*
      * pre: words file has each word in a new line
-     * post: stores given word bank into the program for later reference, as well as initializing leaderboard
+     * post: stores given word bank into the program for later reference, as well as
+     * initializing leaderboard
      * 
      * @param words - file of valid words
      */
@@ -40,6 +41,7 @@ public class Wordle {
      * solution word, and if it is in correct position.
      * 
      * @param inputWord - user-inputted word
+     * 
      * @param solutionWord - word solution that will be compared with user word
      */
     public String checkWord(String inputWord, String solutionWord) {
@@ -79,7 +81,8 @@ public class Wordle {
     }
 
     /*
-     * post: sets up program by prompting the user to specify solution word length to guess
+     * post: sets up program by prompting the user to specify solution word length
+     * to guess
      * 
      * @param input - Scanner for user input
      */
@@ -91,13 +94,18 @@ public class Wordle {
                         "to get the mystery word!\n\n");
 
         while (true) {
-            System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and " + MAX_LENGTH + ": ");
-            int length = input.nextInt(); // catch "not an integer" case later
-            if (isValidLength(length)) {
-                System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
-                "of your word that says how close your guess is to the solution:");
-                startWordle(input, 1, length);
-                break;
+            System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
+                    + MAX_LENGTH + ": ");
+            String length = input.nextLine();
+            try {
+                if (isValidLength(Integer.parseInt(length))) {
+                    System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
+                            "of your word that says how close your guess is to the solution:\n");
+                    startWordle(input, 1, Integer.parseInt(length));
+                    break;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Please type in a number.");
             }
         }
     }
@@ -123,6 +131,9 @@ public class Wordle {
 
             attempts++;
             System.out.println("\n" + checkWord(inputWord, solutionWord) + "\n");
+            if (checkWord(inputWord, solutionWord).equals("Please type in a valid word.")) {
+                attempts--; // removes an attempt for invalid guesses
+            }
             if (inputWord.equals(solutionWord)) {
                 break;
             }
@@ -133,13 +144,14 @@ public class Wordle {
         if (!leaderboard.containsKey(attempts)) { // if no other game with same num of attempts exist
             leaderboard.put(attempts, new ArrayList<>()); // create a new array of game number strings
         }
-        leaderboard.get(attempts).add("Game #" + gameNum + " w/ length " + wordLength); // add game number to amount of attempts + word length selection
-
+        // add game number to amount of attempts + word length selection
+        leaderboard.get(attempts).add("Game #" + gameNum + " w/ length " + wordLength);
         System.out.print("Play another round? (y/n): ");
         String newGame = input.next().toLowerCase();
         if (newGame.equals("y")) {
             while (true) {
-                System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and " + MAX_LENGTH + ": ");
+                System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH
+                        + " and " + MAX_LENGTH + ": ");
                 int length = input.nextInt();
                 if (isValidLength(length)) {
                     startWordle(input, gameNum + 1, length);
@@ -155,7 +167,8 @@ public class Wordle {
     }
 
     /*
-     * post: checks if given number is within bounds of potential length of word solution
+     * post: checks if given number is within bounds of potential length of word
+     * solution
      * 
      * @param num - number the user inputted for word solution length
      */
@@ -170,7 +183,8 @@ public class Wordle {
     /*
      * pre: index is within bounds of given String (throw IndexOutOfBoundsException
      * otherwise)
-     * post: replaces the given string with the given character at the given index and 
+     * post: replaces the given string with the given character at the given index
+     * and
      * returns the result. this method is similar to the String library's replace()
      * function except that it does not replace every occurence of the given input.
      * rather, it only replaces at the provided index and returns a string.
