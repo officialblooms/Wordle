@@ -46,10 +46,6 @@ public class Wordle {
      */
     public String checkWord(String inputWord, String solutionWord) {
 
-        if (inputWord.length() != solutionWord.length()) {
-            return "Please type in a valid word.";
-        }
-
         String[] inputLetters = inputWord.split("");
         String tempSolution = solutionWord; // this will be modified later so its best to make a copy
         String ret = "";
@@ -130,12 +126,15 @@ public class Wordle {
             String inputWord = input.next().toLowerCase().trim();
 
             attempts++;
-            System.out.println("\n" + checkWord(inputWord, solutionWord) + "\n");
-            if (checkWord(inputWord, solutionWord).equals("Please type in a valid word.")) {
+            // tests invalid guesses
+            if (inputWord.length() != wordLength || inputWord.matches("[^a-zA-Z]+")) {
+                System.out.println("Please type in a valid word.");
                 attempts--; // removes an attempt for invalid guesses
-            }
-            if (inputWord.equals(solutionWord)) {
-                break;
+            } else {
+                System.out.println("\n" + checkWord(inputWord, solutionWord) + "\n");
+                if (inputWord.equals(solutionWord)) {
+                    break;
+                }
             }
         }
 
