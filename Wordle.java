@@ -1,4 +1,4 @@
-// IDEA: every letter has to be a letter, add a hard mode figure out what makes a word valid(?)
+// IDEA: add a hard mode, figure out what makes a word valid(?), wordle bot
 
 // Wordle program is a game played on console, where the user tries to guess a word that is
 // selected at random through every game. After the user word is inputted, the program will tell the
@@ -87,7 +87,7 @@ public class Wordle {
                 "Welcome to Wordle! Your objective is to guess the mystery word in the\n" +
                         "least amount of guesses. Play as many games as you'd like! At the end,\n" +
                         "a leaderboard will display your best games by the number of guesses you used\n" +
-                        "to get the mystery word! (UNLIMITED GUESSES)\n\n");
+                        "to get the mystery word! (UNLIMITED GUESSES)\n");
 
         while (true) {
             System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
@@ -95,6 +95,11 @@ public class Wordle {
             String length = input.nextLine();
             try {
                 if (isValidLength(Integer.parseInt(length))) {
+                    try {
+                        Thread.sleep(1500); // wait abit before printing output
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                     System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
                             "of your word that says how close your guess is to the solution:\n");
                     startWordle(input, 1, Integer.parseInt(length));
