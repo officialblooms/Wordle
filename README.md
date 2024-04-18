@@ -10,3 +10,4 @@ LIST OF UPDATES:
 - 4/1/24: Combined games with same # attempts into one line
 - 4/4/24: User can now choose how long word solution can be (from 4 to 8 letters); No longer need to include a banned words text file!
 - 4/7/24: Word solution length can be from 3 to 6 letters now
+- 4/17/24: Output now includes the word and clues from previous guesses as well for easier reference
