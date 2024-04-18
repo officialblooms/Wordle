@@ -15,6 +15,11 @@ public class Wordle {
     public static final int MIN_LENGTH = 3; // minimum word solution length
     public static final int MAX_LENGTH = 6; // maximum word solution length
 
+    // HARD MODE VARIABLES
+    private List<String> absentLetters;
+    private List<String> presentLetters;
+    private Map<Integer, String> correctPosLetters;
+
     /*
      * pre: words file has each word in a new line
      * post: stores given word bank into the program for later reference, as well as
@@ -34,6 +39,9 @@ public class Wordle {
         }
 
         leaderboard = new TreeMap<>();
+
+        absentLetters = new ArrayList<>();
+        correctPosLetters = new HashMap<>();
     }
 
     /*
@@ -71,6 +79,30 @@ public class Wordle {
                 // should not be accounted for if that letter is not found anywhere else
                 // in solution word besides this one
                 tempSolution = replaceAt(tempSolution, inputLetterPos, " ");
+            }
+        }
+        return ret;
+    }
+
+    private String checkWordHard(String inputWord, String solutionWord) {
+        String ret = checkWord(inputWord, solutionWord);
+
+        for (int i = 0; i < ret.length(); i++) {
+            String symbol = Character.toString(ret.charAt(i));
+            String inputLetter = Character.toString(inputWord.charAt(i));
+            if (symbol.equals("_")) {
+                if (absentLetters.contains(inputLetter)) {
+                    return "Please include letters from previous hints";
+                }
+                absentLetters.add(inputLetter);
+            } else if (symbol.equals("*")) {
+                if (!presentLetters.contains(inputLetter)) {
+                    return "Please include letters from previous hints";
+                }
+            } else {
+                if (!symbol.equals(inputLetter)) {
+                    return "Plese include letters from previous hints";
+                }
             }
         }
         return ret;
