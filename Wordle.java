@@ -95,13 +95,9 @@ public class Wordle {
             String length = input.nextLine();
             try {
                 if (isValidLength(Integer.parseInt(length))) {
-                    try {
-                        Thread.sleep(1500); // wait abit before printing output
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
                     System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
-                            "of your word that says how close your guess is to the solution:\n");
+                            "of your word that says how close your guess is to the solution, along with your inputted\n"
+                            + "word beside the symbols:\n");
                     startWordle(input, 1, Integer.parseInt(length));
                     break;
                 }
@@ -126,17 +122,20 @@ public class Wordle {
 
         printGuide();
 
+        String progressWord = "";
+
         while (true) {
             System.out.print("Type your guess: ");
             String inputWord = input.next().toLowerCase().trim();
 
             attempts++;
-            // tests invalid guesses
+
             if (inputWord.length() != wordLength || inputWord.matches("[^a-zA-Z]+")) {
                 System.out.println("Please type in a valid word.");
                 attempts--; // removes an attempt for invalid guesses
             } else {
-                System.out.println("\n" + checkWord(inputWord, solutionWord) + "\n");
+                progressWord += checkWord(inputWord, solutionWord) + " (" + inputWord + ")\n";
+                System.out.println("\n" + progressWord + "\n");
                 if (inputWord.equals(solutionWord)) {
                     break;
                 }
@@ -211,9 +210,9 @@ public class Wordle {
      * post: prints out representation of each symbol for the program
      */
     private void printGuide() {
-        System.out.println("\"_\" means that the letter is not found in the solution.\n" +
-                "\"*\" means that the letter is found in the solution but in a different position.\n" +
-                "If the letter shows up in the result, it is in the correct position.\n" +
+        System.out.println("\"_\" means that the letter is not found in the solution. (grey)\n" +
+                "\"*\" means that the letter is found in the solution but in a different position. (yellow) \n" +
+                "If the letter shows up in the result, it is in the correct position. (green) \n" +
                 "NOTE: letter with a symbol \"*\" does not necessarily mean that it does not appear\n" +
                 "appear somewhere else in the word (i.e. it can appear more than once). Good luck!\n");
     }
