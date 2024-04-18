@@ -18,7 +18,6 @@ public class Wordle {
     // HARD MODE VARIABLES
     private List<String> absentLetters;
     private List<String> presentLetters;
-    private Map<Integer, String> correctPosLetters;
 
     /*
      * pre: words file has each word in a new line
@@ -41,7 +40,7 @@ public class Wordle {
         leaderboard = new TreeMap<>();
 
         absentLetters = new ArrayList<>();
-        correctPosLetters = new HashMap<>();
+        presentLetters = new ArrayList<>();
     }
 
     /*
@@ -88,21 +87,22 @@ public class Wordle {
         String ret = checkWord(inputWord, solutionWord);
 
         for (int i = 0; i < ret.length(); i++) {
+            String inputLetter = Character.toString(inputWord.charAt(i));
+            if (Character.toString(ret.charAt(i)).equals("*")) {
+                presentLetters.add(inputLetter);
+            }
+        }
+
+        for (int i = 0; i < ret.length(); i++) {
             String symbol = Character.toString(ret.charAt(i));
             String inputLetter = Character.toString(inputWord.charAt(i));
-            if (symbol.equals("_")) {
-                if (absentLetters.contains(inputLetter)) {
-                    return "Please include letters from previous hints";
-                }
+            if (absentLetters.contains(inputLetter) || !presentLetters.contains(inputLetter)
+                    || !symbol.equals(inputLetter)) {
+                return "Please include letters from previous hints";
+            } else if (symbol.equals("_")) {
                 absentLetters.add(inputLetter);
             } else if (symbol.equals("*")) {
-                if (!presentLetters.contains(inputLetter)) {
-                    return "Please include letters from previous hints";
-                }
-            } else {
-                if (!symbol.equals(inputLetter)) {
-                    return "Plese include letters from previous hints";
-                }
+                presentLetters.add(inputLetter);
             }
         }
         return ret;
@@ -124,13 +124,19 @@ public class Wordle {
         while (true) {
             System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
                     + MAX_LENGTH + ": ");
-            String length = input.nextLine();
+            String length = input.next();
             try {
                 if (isValidLength(Integer.parseInt(length))) {
-                    System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
-                            "of your word that says how close your guess is to the solution, along with your inputted\n"
-                            + "word beside the symbols:\n");
-                    startWordle(input, 1, Integer.parseInt(length));
+                    boolean hardMode = false;
+                    System.out.print("Would you like to play in hard mode? This forces you to use hints\n"
+                            + "from previous guesses into your current guess. (y/n): ");
+                    String modeChoice = input.next().toLowerCase();
+                    if (modeChoice.equals("y")) {
+                        hardMode = true;
+                        System.out.println("Good luck :)");
+                    }
+                    printGuide();
+                    startWordle(input, 1, Integer.parseInt(length), hardMode);
                     break;
                 }
             } catch (NumberFormatException e) {
@@ -146,14 +152,13 @@ public class Wordle {
      * 
      * @param gameNum - game number user is currently on; default is 1
      */
-    private void startWordle(Scanner input, int gameNum, int wordLength) {
+    private void startWordle(Scanner input, int gameNum, int wordLength, boolean hardMode) {
         int attempts = 0;
         int randIndex = (int) (Math.random() * wordList.get(wordLength).size());
         String solutionWord = wordList.get(wordLength).get(randIndex);
-        // System.out.println(solutionWord);
+        System.out.println(solutionWord);
 
-        printGuide();
-
+        System.out.println("Hard mode: " + (hardMode ? "ENABLED" : "DISABLED"));
         String progressWord = "";
 
         while (true) {
@@ -166,7 +171,8 @@ public class Wordle {
                 System.out.println("Please type in a valid word.");
                 attempts--; // removes an attempt for invalid guesses
             } else {
-                progressWord += checkWord(inputWord, solutionWord) + " (" + inputWord + ")\n";
+                progressWord += (hardMode ? checkWordHard(inputWord, solutionWord) : checkWord(inputWord, solutionWord))
+                        + " (" + inputWord + ")\n";
                 System.out.println("\n" + progressWord + "\n");
                 if (inputWord.equals(solutionWord)) {
                     break;
@@ -180,19 +186,11 @@ public class Wordle {
             leaderboard.put(attempts, new ArrayList<>()); // create a new array of game number strings
         }
         // add game number to amount of attempts + word length selection
-        leaderboard.get(attempts).add("Game #" + gameNum + " w/ length " + wordLength);
+        leaderboard.get(attempts).add("Game #" + gameNum + " (" + solutionWord + ")");
         System.out.print("Play another round? (y/n): ");
         String newGame = input.next().toLowerCase();
         if (newGame.equals("y")) {
-            while (true) {
-                System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH
-                        + " and " + MAX_LENGTH + ": ");
-                int length = input.nextInt();
-                if (isValidLength(length)) {
-                    startWordle(input, gameNum + 1, length);
-                    break;
-                }
-            }
+            startWordle(input);
         } else { // print out leaderboard
             for (int attemptNum : leaderboard.keySet()) {
                 System.out.println(
@@ -242,7 +240,10 @@ public class Wordle {
      * post: prints out representation of each symbol for the program
      */
     private void printGuide() {
-        System.out.println("\"_\" means that the letter is not found in the solution. (grey)\n" +
+        System.out.println("After inputting each guess, you will see symbols on each letter position\n" +
+                "of your word that says how close your guess is to the solution, along with your inputted\n"
+                + "word beside the symbols:\n" +
+                "\"_\" means that the letter is not found in the solution. (grey)\n" +
                 "\"*\" means that the letter is found in the solution but in a different position. (yellow) \n" +
                 "If the letter shows up in the result, it is in the correct position. (green) \n" +
                 "NOTE: letter with a symbol \"*\" does not necessarily mean that it does not appear\n" +
