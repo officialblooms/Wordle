@@ -1,4 +1,4 @@
-// IDEA: add a hard mode, figure out what makes a word valid(?), wordle bot
+// IDEA: wordle bot
 
 // Wordle program is a game played on console, where the user tries to guess a word that is
 // selected at random through every game. After the user word is inputted, the program will tell the
@@ -16,8 +16,9 @@ public class Wordle {
     public static final int MAX_LENGTH = 6; // maximum word solution length
 
     // HARD MODE VARIABLES
-    private List<String> absentLetters;
-    private List<String> presentLetters;
+    private List<String> absentLetters; // list of user-inputted letters not present in the word
+    private List<String> mustGuess; // list of user-inputted letters that must show on next guess
+    private String wordBuild; // used to check that user guesses uses hints from previous guesses (green-case)
 
     /*
      * pre: words file has each word in a new line
@@ -38,9 +39,6 @@ public class Wordle {
         }
 
         leaderboard = new TreeMap<>();
-
-        absentLetters = new ArrayList<>();
-        presentLetters = new ArrayList<>();
     }
 
     /*
@@ -86,25 +84,42 @@ public class Wordle {
     private String checkWordHard(String inputWord, String solutionWord) {
         String ret = checkWord(inputWord, solutionWord);
 
-        for (int i = 0; i < ret.length(); i++) {
-            String inputLetter = Character.toString(inputWord.charAt(i));
-            if (Character.toString(ret.charAt(i)).equals("*")) {
-                presentLetters.add(inputLetter);
+        // checks if inputWord satisfies hard mode parameters
+        // this looks ugly but i literally have no other idea on how to make this work
+        for (int i = 0; i < absentLetters.size(); i++) {
+            if (inputWord.contains(absentLetters.get(i))) {
+                return "Please include letters from previous hints. (The letter " + absentLetters.get(i)
+                        + " is not in the word.)";
+            }
+        }
+        for (int i = 0; i < mustGuess.size(); i++) {
+            if (!mustGuess.isEmpty() && !inputWord.contains(mustGuess.get(i))) {
+                return "Please include letters from previous hints. (The letter " + mustGuess.get(i)
+                        + " must be in your guess.)";
+            }
+        }
+        for (int i = 0; i < wordBuild.length(); i++) {
+            if (!Character.toString(wordBuild.charAt(i)).equals("-") && wordBuild.charAt(i) != inputWord.charAt(i)) {
+                return "Please include letters from previous hints. (The letter " + wordBuild.charAt(i)
+                        + " must be in the right spot in your guess.)";
             }
         }
 
-        for (int i = 0; i < ret.length(); i++) {
+        // puts letters of inputWord into its respective list(s)
+        for (int i = 0; i < inputWord.length(); i++) {
             String symbol = Character.toString(ret.charAt(i));
-            String inputLetter = Character.toString(inputWord.charAt(i));
-            if (absentLetters.contains(inputLetter) || !presentLetters.contains(inputLetter)
-                    || !symbol.equals(inputLetter)) {
-                return "Please include letters from previous hints";
-            } else if (symbol.equals("_")) {
-                absentLetters.add(inputLetter);
+            String currLetter = Character.toString(inputWord.charAt(i));
+            // second conditional is so repeat letters in solution are not considered absent
+            if (symbol.equals("_") && solutionWord.indexOf(currLetter) == -1) {
+                absentLetters.add(currLetter);
             } else if (symbol.equals("*")) {
-                presentLetters.add(inputLetter);
+                mustGuess.add(currLetter);
+            } else { // is a letter
+                mustGuess.add(currLetter);
+                wordBuild = replaceAt(wordBuild, i, currLetter);
             }
         }
+
         return ret;
     }
 
@@ -121,28 +136,7 @@ public class Wordle {
                         "a leaderboard will display your best games by the number of guesses you used\n" +
                         "to get the mystery word! (UNLIMITED GUESSES)\n");
 
-        while (true) {
-            System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
-                    + MAX_LENGTH + ": ");
-            String length = input.next();
-            try {
-                if (isValidLength(Integer.parseInt(length))) {
-                    boolean hardMode = false;
-                    System.out.print("Would you like to play in hard mode? This forces you to use hints\n"
-                            + "from previous guesses into your current guess. (y/n): ");
-                    String modeChoice = input.next().toLowerCase();
-                    if (modeChoice.equals("y")) {
-                        hardMode = true;
-                        System.out.println("Good luck :)");
-                    }
-                    printGuide();
-                    startWordle(input, 1, Integer.parseInt(length), hardMode);
-                    break;
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Please type in a number.");
-            }
-        }
+        setupGame(input, 1);
     }
 
     /*
@@ -171,9 +165,14 @@ public class Wordle {
                 System.out.println("Please type in a valid word.");
                 attempts--; // removes an attempt for invalid guesses
             } else {
-                progressWord += (hardMode ? checkWordHard(inputWord, solutionWord) : checkWord(inputWord, solutionWord))
-                        + " (" + inputWord + ")\n";
-                System.out.println("\n" + progressWord + "\n");
+                String guessResult = (hardMode ? checkWordHard(inputWord, solutionWord)
+                        : checkWord(inputWord, solutionWord));
+                if (guessResult.length() <= wordLength) { // checks error message (useless if not on hard mode)
+                    progressWord += guessResult + " (" + inputWord + ")\n";
+                } else {
+                    System.out.println(guessResult);
+                }
+                System.out.println("\n" + progressWord);
                 if (inputWord.equals(solutionWord)) {
                     break;
                 }
@@ -186,16 +185,55 @@ public class Wordle {
             leaderboard.put(attempts, new ArrayList<>()); // create a new array of game number strings
         }
         // add game number to amount of attempts + word length selection
-        leaderboard.get(attempts).add("Game #" + gameNum + " (" + solutionWord + ")");
+        leaderboard.get(attempts)
+                .add("Game #" + gameNum + " (" + solutionWord + ")" + (hardMode ? " - HARD MODE" : ""));
+
         System.out.print("Play another round? (y/n): ");
-        String newGame = input.next().toLowerCase();
-        if (newGame.equals("y")) {
-            startWordle(input);
+        if (input.next().toLowerCase().equals("y")) {
+            setupGame(input, gameNum + 1);
         } else { // print out leaderboard
             for (int attemptNum : leaderboard.keySet()) {
                 System.out.println(
                         leaderboard.get(attemptNum) + ": " + attemptNum + " attempt" + (attemptNum > 1 ? "s" : ""));
             }
+        }
+    }
+
+    /*
+     * post: helper function for setting up the game mode and word solution length.
+     * 
+     * @param input - Scanner for user input
+     * 
+     * @param gameNum - current game number user is on for the program's runtime
+     */
+    private void setupGame(Scanner input, int gameNum) {
+        System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
+                + MAX_LENGTH + ": ");
+        String length = input.next();
+        try {
+            if (isValidLength(Integer.parseInt(length))) {
+                boolean hardMode = false;
+                System.out.print("Would you like to play in hard mode? This forces you to use hints from\n"
+                        + "previous guesses into your current guess. (y/n): ");
+                if (input.next().toLowerCase().equals("y")) {
+                    hardMode = true;
+
+                    // setup hard mode variables
+                    wordBuild = new String(new char[Integer.parseInt(length)]).replace("\0", "-");
+                    absentLetters = new ArrayList<>();
+                    mustGuess = new ArrayList<>();
+
+                    System.out.println("Good luck :)\n");
+                }
+
+                printGuide();
+                startWordle(input, gameNum, Integer.parseInt(length), hardMode);
+            } else {
+                setupGame(input, gameNum);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Please type in a number.");
+            setupGame(input, gameNum);
         }
     }
 
@@ -217,10 +255,10 @@ public class Wordle {
      * pre: index is within bounds of given String (throw IndexOutOfBoundsException
      * otherwise)
      * post: replaces the given string with the given character at the given index
-     * and
-     * returns the result. this method is similar to the String library's replace()
-     * function except that it does not replace every occurence of the given input.
-     * rather, it only replaces at the provided index and returns a string.
+     * and returns the result. this method is similar to the String library's
+     * replace() function except that it does not replace every occurence of the
+     * given input. rather, it only replaces at the provided index and returns a
+     * string.
      * 
      * @param toReplace - String to have its contents modified
      * 
