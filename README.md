@@ -11,3 +11,4 @@ LIST OF UPDATES:
 - 4/4/24: User can now choose how long word solution can be (from 4 to 8 letters); No longer need to include a banned words text file!
 - 4/7/24: Word solution length can be from 3 to 6 letters now
 - 4/17/24: Output now includes the word and clues from previous guesses as well for easier reference
+- 4/22/24: Added hard mode where you are required to use hints gathered from previous guesses. 
