@@ -1,4 +1,4 @@
-// IDEA: wordle bot
+// IDEA: wordle bot (ok maybe not)
 
 // Wordle program is a game played on console, where the user tries to guess a word that is
 // selected at random through every game. After the user word is inputted, the program will tell the
@@ -16,8 +16,8 @@ public class Wordle {
     public static final int MAX_LENGTH = 6; // maximum word solution length
 
     // HARD MODE VARIABLES
-    private List<String> absentLetters; // list of user-inputted letters not present in the word
-    private List<String> mustGuess; // list of user-inputted letters that must show on next guess
+    private Set<String> absentLetters; // list of user-inputted letters not present in the word
+    private Set<String> mustGuess; // list of user-inputted letters that must show on next guess
     private String wordBuild; // used to check that user guesses uses hints from previous guesses (green-case)
 
     /*
@@ -42,88 +42,6 @@ public class Wordle {
     }
 
     /*
-     * post: checks user-inputted word for any letters that are contained in the
-     * solution word, and if it is in correct position.
-     * 
-     * @param inputWord - user-inputted word
-     * 
-     * @param solutionWord - word solution that will be compared with user word
-     */
-    public String checkWord(String inputWord, String solutionWord) {
-
-        String[] inputLetters = inputWord.split("");
-        String tempSolution = solutionWord; // this will be modified later so its best to make a copy
-        String ret = "";
-
-        for (int i = 0; i < inputLetters.length; i++) { // checks if letter is in correct position
-            if (inputLetters[i].equals(Character.toString(tempSolution.charAt(i)))) {
-                ret += inputLetters[i];
-                // letter is in correct position, so set to "-" to not be compared again
-                inputLetters[i] = "-";
-                tempSolution = replaceAt(tempSolution, i, "-");
-            } else {
-                ret += "_";
-            }
-        }
-
-        // checks if letter is in word (and isn't in correct position already)
-        for (int i = 0; i < inputLetters.length; i++) {
-            int inputLetterPos = tempSolution.indexOf(inputLetters[i]);
-            // if letter is in right position or is not found in solution word, do nothing
-            if (!inputLetters[i].equals("-") && inputLetterPos != -1) {
-                ret = replaceAt(ret, i, "*");
-                // temporarily removes letter so if same letter is found in different position,
-                // should not be accounted for if that letter is not found anywhere else
-                // in solution word besides this one
-                tempSolution = replaceAt(tempSolution, inputLetterPos, " ");
-            }
-        }
-        return ret;
-    }
-
-    private String checkWordHard(String inputWord, String solutionWord) {
-        String ret = checkWord(inputWord, solutionWord);
-
-        // checks if inputWord satisfies hard mode parameters
-        // this looks ugly but i literally have no other idea on how to make this work
-        for (int i = 0; i < absentLetters.size(); i++) {
-            if (inputWord.contains(absentLetters.get(i))) {
-                return "Please include letters from previous hints. (The letter " + absentLetters.get(i)
-                        + " is not in the word.)";
-            }
-        }
-        for (int i = 0; i < mustGuess.size(); i++) {
-            if (!mustGuess.isEmpty() && !inputWord.contains(mustGuess.get(i))) {
-                return "Please include letters from previous hints. (The letter " + mustGuess.get(i)
-                        + " must be in your guess.)";
-            }
-        }
-        for (int i = 0; i < wordBuild.length(); i++) {
-            if (!Character.toString(wordBuild.charAt(i)).equals("-") && wordBuild.charAt(i) != inputWord.charAt(i)) {
-                return "Please include letters from previous hints. (The letter " + wordBuild.charAt(i)
-                        + " must be in the right spot in your guess.)";
-            }
-        }
-
-        // puts letters of inputWord into its respective list(s)
-        for (int i = 0; i < inputWord.length(); i++) {
-            String symbol = Character.toString(ret.charAt(i));
-            String currLetter = Character.toString(inputWord.charAt(i));
-            // second conditional is so repeat letters in solution are not considered absent
-            if (symbol.equals("_") && solutionWord.indexOf(currLetter) == -1) {
-                absentLetters.add(currLetter);
-            } else if (symbol.equals("*")) {
-                mustGuess.add(currLetter);
-            } else { // is a letter
-                mustGuess.add(currLetter);
-                wordBuild = replaceAt(wordBuild, i, currLetter);
-            }
-        }
-
-        return ret;
-    }
-
-    /*
      * post: sets up program by prompting the user to specify solution word length
      * to guess
      * 
@@ -140,6 +58,44 @@ public class Wordle {
     }
 
     /*
+     * post: helper function for setting up the game mode and word solution length.
+     * 
+     * @param input - Scanner for user input
+     * 
+     * @param gameNum - current game number user is on for the program's runtime
+     */
+    private void setupGame(Scanner input, int gameNum) {
+        System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
+                + MAX_LENGTH + ": ");
+        String length = input.next();
+        try {
+            if (isValidLength(Integer.parseInt(length))) {
+                boolean hardMode = false;
+                System.out.print("Would you like to play in hard mode? This forces you to use hints from\n"
+                        + "previous guesses into your current guess. (y/n): ");
+                if (input.next().toLowerCase().equals("y")) {
+                    hardMode = true;
+
+                    // setup hard mode variables
+                    wordBuild = new String(new char[Integer.parseInt(length)]).replace("\0", "-");
+                    absentLetters = new TreeSet<>();
+                    mustGuess = new TreeSet<>();
+
+                    System.out.println("Good luck :)\n");
+                }
+
+                printGuide();
+                startWordle(input, gameNum, Integer.parseInt(length), hardMode);
+            } else {
+                setupGame(input, gameNum);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Please type in a number.");
+            setupGame(input, gameNum);
+        }
+    }
+
+    /*
      * helper method for startWordle to track game number for leaderboard tracking
      * 
      * @param input - Scanner for user input
@@ -150,7 +106,7 @@ public class Wordle {
         int attempts = 0;
         int randIndex = (int) (Math.random() * wordList.get(wordLength).size());
         String solutionWord = wordList.get(wordLength).get(randIndex);
-        System.out.println(solutionWord);
+        // System.out.println(solutionWord);
 
         System.out.println("Hard mode: " + (hardMode ? "ENABLED" : "DISABLED"));
         String progressWord = "";
@@ -200,41 +156,100 @@ public class Wordle {
     }
 
     /*
-     * post: helper function for setting up the game mode and word solution length.
+     * post: checks user-inputted word for any letters that are contained in the
+     * solution word, and if it is in correct position.
      * 
-     * @param input - Scanner for user input
+     * @param inputWord - user-inputted word
      * 
-     * @param gameNum - current game number user is on for the program's runtime
+     * @param solutionWord - word solution that will be compared with user word
      */
-    private void setupGame(Scanner input, int gameNum) {
-        System.out.print("How long would you like the word solution to be? Choose between " + MIN_LENGTH + " and "
-                + MAX_LENGTH + ": ");
-        String length = input.next();
-        try {
-            if (isValidLength(Integer.parseInt(length))) {
-                boolean hardMode = false;
-                System.out.print("Would you like to play in hard mode? This forces you to use hints from\n"
-                        + "previous guesses into your current guess. (y/n): ");
-                if (input.next().toLowerCase().equals("y")) {
-                    hardMode = true;
+    public String checkWord(String inputWord, String solutionWord) {
 
-                    // setup hard mode variables
-                    wordBuild = new String(new char[Integer.parseInt(length)]).replace("\0", "-");
-                    absentLetters = new ArrayList<>();
-                    mustGuess = new ArrayList<>();
+        String[] inputLetters = inputWord.split("");
+        String tempSolution = solutionWord; // this will be modified later so its best to make a copy
+        String ret = "";
 
-                    System.out.println("Good luck :)\n");
-                }
-
-                printGuide();
-                startWordle(input, gameNum, Integer.parseInt(length), hardMode);
+        for (int i = 0; i < inputLetters.length; i++) { // checks if letter is in correct position
+            if (inputLetters[i].equals(Character.toString(tempSolution.charAt(i)))) {
+                ret += inputLetters[i];
+                // letter is in correct position, so set to "-" to not be compared again
+                inputLetters[i] = "-";
+                tempSolution = replaceAt(tempSolution, i, "-");
             } else {
-                setupGame(input, gameNum);
+                ret += "_";
             }
-        } catch (NumberFormatException e) {
-            System.out.println("Please type in a number.");
-            setupGame(input, gameNum);
         }
+
+        // checks if letter is in word (and isn't in correct position already)
+        for (int i = 0; i < inputLetters.length; i++) {
+            int inputLetterPos = tempSolution.indexOf(inputLetters[i]);
+            // if letter is in right position or is not found in solution word, do nothing
+            if (!inputLetters[i].equals("-") && inputLetterPos != -1) {
+                ret = replaceAt(ret, i, "*");
+                // temporarily removes letter so if same letter is found in different position,
+                // should not be accounted for if that letter is not found anywhere else
+                // in solution word besides this one
+                tempSolution = replaceAt(tempSolution, inputLetterPos, " ");
+            }
+        }
+        return ret;
+    }
+
+    /*
+     * post: checks the user-inputted word if it satisfies all the hard mode rules.
+     * returns a certain message if one of the rules is broken and does not show any
+     * new clues to the user
+     * 
+     * @param inputWord - user inputted word
+     * 
+     * @param solutionWord - word solution that will be compared with user word
+     */
+    private String checkWordHard(String inputWord, String solutionWord) {
+        String ret = checkWord(inputWord, solutionWord);
+
+        // checks if inputWord satisfies hard mode parameters
+        // this looks ugly but i literally have no other idea on how to make this work
+        Iterator<String> absentItr = absentLetters.iterator();
+        while (absentItr.hasNext()) {
+            String absentLetter = absentItr.next();
+            if (inputWord.contains(absentLetter)) {
+                return "Please include letters from previous hints. (The letter " + absentLetter
+                        + " is not in the word.)";
+            }
+        }
+
+        Iterator<String> guessItr = mustGuess.iterator();
+        while (guessItr.hasNext()) {
+            String guessLetter = guessItr.next();
+            if (!mustGuess.isEmpty() && !inputWord.contains(guessLetter)) {
+                return "Please include letters from previous hints. (The letter " + guessLetter
+                        + " must be in your guess.)";
+            }
+        }
+
+        for (int i = 0; i < wordBuild.length(); i++) {
+            if (!Character.toString(wordBuild.charAt(i)).equals("-") && wordBuild.charAt(i) != inputWord.charAt(i)) {
+                return "Please include letters from previous hints. (The letter " + wordBuild.charAt(i)
+                        + " must be in the right spot in your guess.)";
+            }
+        }
+
+        // puts letters of inputWord into its respective list(s)
+        for (int i = 0; i < inputWord.length(); i++) {
+            String symbol = Character.toString(ret.charAt(i));
+            String currLetter = Character.toString(inputWord.charAt(i));
+            // second conditional is so repeat letters in solution are not considered absent
+            if (symbol.equals("_") && solutionWord.indexOf(currLetter) == -1) {
+                absentLetters.add(currLetter);
+            } else if (symbol.equals("*")) {
+                mustGuess.add(currLetter);
+            } else { // is a letter
+                mustGuess.add(currLetter);
+                wordBuild = replaceAt(wordBuild, i, currLetter);
+            }
+        }
+
+        return ret;
     }
 
     /*
