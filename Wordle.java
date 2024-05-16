@@ -105,7 +105,8 @@ public class Wordle {
     private void startWordle(Scanner input, int gameNum, int wordLength, boolean hardMode) {
         int attempts = 0;
         int randIndex = (int) (Math.random() * wordList.get(wordLength).size());
-        String solutionWord = wordList.get(wordLength).get(randIndex);
+        String solutionWord = wordList.get(wordLength).get(randIndex).toLowerCase();
+        // String solutionWord = "piano";
         // System.out.println(solutionWord);
 
         System.out.println("Hard mode: " + (hardMode ? "ENABLED" : "DISABLED"));
@@ -145,7 +146,7 @@ public class Wordle {
                 .add("Game #" + gameNum + " (" + solutionWord + ")" + (hardMode ? " - HARD MODE" : ""));
 
         System.out.print("Play another round? (y/n): ");
-        if (input.next().toLowerCase().equals("y")) {
+        if (Character.toString(input.next().toLowerCase().charAt(0)).equals("y")) { // checks first char of answer
             setupGame(input, gameNum + 1);
         } else { // print out leaderboard
             for (int attemptNum : leaderboard.keySet()) {
