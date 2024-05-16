@@ -1,10 +1,18 @@
-This Wordle repository was an old project of mine back when I was taking AP Computer Science A in my high school.
+## Wordle
 
-This program is very basic and uses elementary Java knowledge I learnt over the course of the 2022-2023 school year.
+My own version of a Wordle program I made back in high school in AP Computer Science A, and continue to improve and refine it as I learn more about coding while at the Univeristy of Washington. Hopefully this will look a lot better than what it is now!
 
-I plan on revising this coding project frequently as I continue to learn more about coding here at the University of Washington. Hopefully this will look a lot better than what it is now!
+## Installation
 
-LIST OF UPDATES:
+(probably wrong lol)
+Clone the git repository onto your local machine by doing:
+```bash
+git clone https://github.com/officialblooms/Wordle/
+```
+After installing, run the folder in your code editor and run the program on ```main.java```, and have fun with the game!
+
+## Updates
+As I continue improving my high school project, I will document specific changes made on the client-side. Make sure you do ```git pull``` to ensure you are playing on the updated version!
 - 3/27/24: Added specific instructions for user during Wordle play
 - 3/29/24: Replaced output of word status from words into symbols (_, *, <letter>)
 - 4/1/24: Combined games with same # attempts into one line
